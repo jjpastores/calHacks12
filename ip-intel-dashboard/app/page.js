@@ -161,11 +161,112 @@ export default function Home() {
                   </div>
                 )}
               </InfoCard>
+
+              {/* AI Threat Assessment Card */}
+              <InfoCard title="🤖 AI Threat Assessment" data={data.aiAnalysis}>
+                {data.aiAnalysis && !data.aiAnalysis.error && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-400 text-sm font-medium">Risk Score:</span>
+                      <span className={`text-2xl font-bold ${
+                        data.aiAnalysis.riskScore >= 7 ? 'text-red-500' :
+                        data.aiAnalysis.riskScore >= 4 ? 'text-orange-500' :
+                        'text-green-500'
+                      }`}>
+                        {data.aiAnalysis.riskScore}/10
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-700 rounded-full h-2.5">
+                      <div
+                        className={`h-2.5 rounded-full ${
+                          data.aiAnalysis.riskScore >= 7 ? 'bg-red-500' :
+                          data.aiAnalysis.riskScore >= 4 ? 'bg-orange-500' :
+                          'bg-green-500'
+                        }`}
+                        style={{ width: `${data.aiAnalysis.riskScore * 10}%` }}
+                      ></div>
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      Severity: <span className="text-white font-semibold">{data.aiAnalysis.severity}</span>
+                    </div>
+                    <div className="text-sm text-gray-300 pt-2 border-t border-gray-700">
+                      {data.aiAnalysis.summary}
+                    </div>
+                    {data.aiAnalysis.indicators && data.aiAnalysis.indicators.length > 0 && (
+                      <div className="pt-2">
+                        <p className="text-xs text-gray-400 mb-1">Key Indicators:</p>
+                        <ul className="list-disc list-inside text-xs text-yellow-400 space-y-1">
+                          {data.aiAnalysis.indicators.map((indicator, idx) => (
+                            <li key={idx}>{indicator}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </InfoCard>
+
+              {/* Historical Abuse Card */}
+              {data.abuseipdb && (
+                <InfoCard title="Historical Abuse" data={data.abuseipdb}>
+                  {!data.abuseipdb.error && data.abuseipdb.data && (
+                    <div className="space-y-2 text-sm">
+                      <InfoRow label="Abuse Score" value={`${data.abuseipdb.data.abuseConfidenceScore}%`} />
+                      <InfoRow label="Reports" value={data.abuseipdb.data.totalReports || '0'} />
+                      <InfoRow label="Usage Type" value={data.abuseipdb.data.usageType || 'N/A'} />
+                      <InfoRow label="ISP" value={data.abuseipdb.data.isp || 'N/A'} />
+                      <InfoRow label="Domain" value={data.abuseipdb.data.domain || 'N/A'} />
+                    </div>
+                  )}
+                  {!data.abuseipdb.error && !data.abuseipdb.data && (
+                    <p className="text-gray-400 text-sm">No abuse reports found</p>
+                  )}
+                </InfoCard>
+              )}
+
+              {/* Network Recon Card */}
+              {data.ports && (
+                <InfoCard title="Network Recon" data={data.ports}>
+                  {!data.ports.error && Array.isArray(data.ports) && data.ports.length > 0 ? (
+                    <div className="space-y-2 text-sm">
+                      <p className="text-gray-400 mb-2">Open Ports:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {data.ports.map((port, idx) => (
+                          <span key={idx} className="px-3 py-1 bg-blue-900/30 text-blue-300 rounded-md text-xs font-mono">
+                            {port.port}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-gray-400 text-sm">No open ports detected</p>
+                  )}
+                </InfoCard>
+              )}
+
+              {/* Subdomain Discovery Card */}
+              {data.subdomains && Array.isArray(data.subdomains) && data.subdomains.length > 0 && (
+                <InfoCard title="Subdomain Discovery" data={data.subdomains}>
+                  <div className="space-y-2 text-sm">
+                    <p className="text-gray-400 mb-2">Found {data.subdomains.length} subdomains:</p>
+                    <div className="max-h-40 overflow-y-auto space-y-1">
+                      {data.subdomains.slice(0, 10).map((subdomain, idx) => (
+                        <div key={idx} className="text-xs text-green-400 font-mono bg-gray-900/50 px-2 py-1 rounded">
+                          {subdomain}
+                        </div>
+                      ))}
+                      {data.subdomains.length > 10 && (
+                        <p className="text-xs text-gray-500">...and {data.subdomains.length - 10} more</p>
+                      )}
+                    </div>
+                  </div>
+                </InfoCard>
+              )}
             </div>
 
             {/* Footer */}
             <div className="text-center pt-8 border-t border-gray-700 text-gray-400 text-sm">
-              Data sources: ip-api.com, RDAP, Cloudflare DNS
+              Data sources: ip-api.com, RDAP, Cloudflare DNS, VirusTotal, AbuseIPDB, Certificate Transparency, AI Threat Analysis
             </div>
           </div>
         )}

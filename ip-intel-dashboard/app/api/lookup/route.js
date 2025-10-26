@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import axios from 'axios';
 import { isIP } from 'validator';
 import isIPInRange from 'ip-range-check';
+import { checkVirusTotal, checkAbuseIPDB, scanPorts, findSubdomains, bruteForceSubdomains } from '../../utils/threatIntel';
+import { analyzeThreat } from '../../utils/aiAnalysis';
 
 export async function GET(request) {
   try {
@@ -43,6 +45,11 @@ export async function GET(request) {
       rdap: null,
       dns: null,
       http: null,
+      virustotal: null,
+      abuseipdb: null,
+      ports: null,
+      subdomains: null,
+      aiAnalysis: null,
     };
 
     // Fetch Geo/ASN data
@@ -103,6 +110,47 @@ export async function GET(request) {
       result.http = {
         error: error.code === 'ECONNREFUSED' ? 'Connection refused' : 'Failed to fetch HTTP data',
       };
+    }
+
+    // Fetch VirusTotal threat intelligence (only for IPs)
+    if (isIPAddress) {
+      try {
+        result.virustotal = await checkVirusTotal(targetTrimmed);
+      } catch (error) {
+        result.virustotal = { error: 'Failed to fetch VirusTotal data' };
+      }
+
+      // Fetch AbuseIPDB data
+      try {
+        result.abuseipdb = await checkAbuseIPDB(targetTrimmed);
+      } catch (error) {
+        result.abuseipdb = { error: 'Failed to fetch AbuseIPDB data' };
+      }
+
+      // Scan ports
+      try {
+        result.ports = await scanPorts(targetTrimmed);
+      } catch (error) {
+        result.ports = { error: 'Failed to scan ports' };
+      }
+    }
+
+    // Fetch subdomains (only for domains)
+    if (!isIPAddress) {
+      try {
+        const ctSubdomains = await findSubdomains(targetTrimmed);
+        const bruteForceResults = await bruteForceSubdomains(targetTrimmed);
+        result.subdomains = [...new Set([...ctSubdomains, ...bruteForceResults])];
+      } catch (error) {
+        result.subdomains = { error: 'Failed to find subdomains' };
+      }
+    }
+
+    // Run AI-powered threat analysis
+    try {
+      result.aiAnalysis = await analyzeThreat(result);
+    } catch (error) {
+      result.aiAnalysis = { error: 'Failed to analyze threat' };
     }
 
     return NextResponse.json(result);
